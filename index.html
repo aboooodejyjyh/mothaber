@@ -1,0 +1,2291 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="مُثابِر">
+    <meta name="theme-color" content="#1a0f0a">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <title>مُثابِر</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700;800;900&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        :root {
+            --sand-light: #F5E6C8;
+            --sand: #DEB887;
+            --sand-dark: #C4935A;
+            --brown-light: #8B6914;
+            --brown: #6B4E16;
+            --brown-dark: #4A3512;
+            --brown-darker: #2D1F0B;
+            --night: #1a0f0a;
+            --night-light: #2a1f14;
+            --gold: #D4A844;
+            --gold-light: #F0D68A;
+            --gold-glow: #FFD700;
+            --green: #4A7A4A;
+            --green-light: #6BAF6B;
+            --blue: #4A6FA5;
+            --blue-light: #7BA3D4;
+            --red-soft: #C4564A;
+            --white: #FFF8EE;
+            --text: #F5E6C8;
+            --text-dim: #A08B6E;
+            --safe-top: env(safe-area-inset-top);
+            --safe-bottom: env(safe-area-inset-bottom);
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: var(--night);
+            color: var(--text);
+            overflow: hidden;
+            height: 100vh;
+            height: 100dvh;
+            width: 100vw;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+
+        /* ======= SCREENS ======= */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            transition: opacity 0.3s ease;
+        }
+        .screen.active {
+            display: flex;
+        }
+
+        /* ======= SPLASH SCREEN ======= */
+        #splash-screen {
+            background: radial-gradient(ellipse at center bottom, #2D1F0B 0%, #1a0f0a 70%);
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .splash-content {
+            text-align: center;
+            animation: fadeInUp 1s ease;
+        }
+        .splash-logo {
+            font-family: 'Amiri', serif;
+            font-size: 52px;
+            font-weight: 700;
+            color: var(--gold);
+            text-shadow: 0 0 30px rgba(212,168,68,0.5);
+            margin-bottom: 10px;
+        }
+        .splash-sub {
+            font-size: 16px;
+            color: var(--text-dim);
+            letter-spacing: 2px;
+        }
+        .splash-loader {
+            margin-top: 40px;
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--brown-dark);
+            border-top-color: var(--gold);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ======= CITY VIEW (Main Screen) ======= */
+        #city-screen {
+            background: linear-gradient(180deg, #0a1628 0%, #1a2a4a 20%, #d4845a 55%, #e8a87c 65%, var(--sand-dark) 75%, var(--sand) 100%);
+        }
+
+        .city-top-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: calc(var(--safe-top) + 10px) 20px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+            background: linear-gradient(to bottom, rgba(10,22,40,0.8) 0%, transparent 100%);
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(0,0,0,0.4);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(212,168,68,0.2);
+        }
+
+        .stat-icon {
+            font-size: 14px;
+        }
+
+        .stat-value {
+            font-weight: 700;
+            color: var(--gold-light);
+        }
+
+        .phase-badge {
+            background: linear-gradient(135deg, var(--gold) 0%, var(--brown-light) 100%);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--night);
+        }
+
+        /* City Canvas */
+        .city-viewport {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: calc(100% - 80px);
+            overflow: hidden;
+            touch-action: pan-x pan-y;
+        }
+
+        .city-world {
+            position: absolute;
+            width: 2000px;
+            height: 2000px;
+            transform-origin: center center;
+            transition: transform 0.1s ease-out;
+        }
+
+        .city-ground {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 60%;
+            background: linear-gradient(to bottom, var(--sand-dark) 0%, var(--sand) 30%, #C4A265 100%);
+            border-radius: 50% 50% 0 0 / 10% 10% 0 0;
+        }
+
+        /* Grid for buildings */
+        .city-grid {
+            position: absolute;
+            bottom: 15%;
+            left: 50%;
+            transform: translateX(-50%);
+            display: grid;
+            gap: 4px;
+            direction: ltr;
+        }
+
+        .building-slot {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .building-slot:active {
+            transform: scale(0.95);
+        }
+
+        .building-slot.empty {
+            opacity: 0.3;
+        }
+
+        .building-emoji {
+            font-size: 32px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+            animation: buildingIdle 3s ease-in-out infinite;
+        }
+
+        .building-slot:nth-child(odd) .building-emoji {
+            animation-delay: -1.5s;
+        }
+
+        @keyframes buildingIdle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-2px); }
+        }
+
+        /* People walking */
+        .person {
+            position: absolute;
+            font-size: 16px;
+            bottom: 12%;
+            animation: walkPerson linear infinite;
+            z-index: 5;
+        }
+
+        @keyframes walkPerson {
+            from { left: -30px; }
+            to { left: calc(100% + 30px); }
+        }
+
+        /* Decorative elements */
+        .cloud {
+            position: absolute;
+            font-size: 24px;
+            opacity: 0.6;
+            animation: floatCloud linear infinite;
+        }
+
+        @keyframes floatCloud {
+            from { transform: translateX(100vw); }
+            to { transform: translateX(-100px); }
+        }
+
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 2s ease-in-out infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        /* ======= START SESSION BUTTON ======= */
+        .start-session-btn {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, var(--gold) 0%, var(--brown-light) 100%);
+            color: var(--night);
+            border: none;
+            padding: 14px 40px;
+            border-radius: 30px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 18px;
+            font-weight: 800;
+            cursor: pointer;
+            z-index: 10;
+            box-shadow: 0 4px 20px rgba(212,168,68,0.4);
+            transition: all 0.3s;
+        }
+
+        .start-session-btn:active {
+            transform: translateX(-50%) scale(0.95);
+            box-shadow: 0 2px 10px rgba(212,168,68,0.3);
+        }
+
+        /* ======= BOTTOM NAV ======= */
+        .bottom-nav {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: calc(80px + var(--safe-bottom));
+            padding-bottom: var(--safe-bottom);
+            background: linear-gradient(to top, rgba(26,15,10,0.98) 0%, rgba(26,15,10,0.9) 100%);
+            backdrop-filter: blur(20px);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border-top: 1px solid rgba(212,168,68,0.15);
+            z-index: 20;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 12px;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .nav-item.active {
+            background: rgba(212,168,68,0.15);
+        }
+
+        .nav-item.active .nav-icon {
+            color: var(--gold);
+        }
+
+        .nav-item.active .nav-label {
+            color: var(--gold);
+        }
+
+        .nav-icon {
+            font-size: 22px;
+            color: var(--text-dim);
+            transition: color 0.3s;
+        }
+
+        .nav-label {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--text-dim);
+            transition: color 0.3s;
+        }
+
+        /* ======= SESSION SCREEN ======= */
+        #session-screen {
+            background: radial-gradient(ellipse at center, #2D1F0B 0%, #1a0f0a 100%);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .session-back {
+            position: absolute;
+            top: calc(var(--safe-top) + 15px);
+            right: 20px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(212,168,68,0.2);
+            color: var(--text);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        .session-setup {
+            text-align: center;
+            width: 100%;
+            padding: 0 30px;
+        }
+
+        .session-title {
+            font-family: 'Amiri', serif;
+            font-size: 28px;
+            color: var(--gold);
+            margin-bottom: 30px;
+        }
+
+        .time-picker {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 40px;
+        }
+
+        .time-btn {
+            background: rgba(212,168,68,0.15);
+            border: 1px solid rgba(212,168,68,0.3);
+            color: var(--gold);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Tajawal';
+        }
+
+        .time-display {
+            font-size: 64px;
+            font-weight: 800;
+            color: var(--gold-light);
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .time-unit {
+            font-size: 16px;
+            color: var(--text-dim);
+            margin-top: -10px;
+            margin-bottom: 30px;
+        }
+
+        .preset-times {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 40px;
+        }
+
+        .preset-btn {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(212,168,68,0.2);
+            color: var(--text);
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-family: 'Tajawal';
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .preset-btn.active {
+            background: var(--gold);
+            color: var(--night);
+            border-color: var(--gold);
+            font-weight: 700;
+        }
+
+        .begin-btn {
+            background: linear-gradient(135deg, var(--gold) 0%, var(--brown-light) 100%);
+            color: var(--night);
+            border: none;
+            padding: 16px 60px;
+            border-radius: 30px;
+            font-family: 'Tajawal';
+            font-size: 20px;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 4px 30px rgba(212,168,68,0.4);
+        }
+
+        /* ======= TIMER SCREEN ======= */
+        #timer-screen {
+            background: radial-gradient(ellipse at center, #2D1F0B 0%, #1a0f0a 100%);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .timer-building-preview {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .timer-label {
+            font-size: 14px;
+            color: var(--text-dim);
+            margin-bottom: 5px;
+            letter-spacing: 2px;
+        }
+
+        .timer-countdown {
+            font-size: 72px;
+            font-weight: 800;
+            color: var(--gold-light);
+            font-variant-numeric: tabular-nums;
+            margin-bottom: 10px;
+        }
+
+        .timer-progress-ring {
+            position: relative;
+            width: 250px;
+            height: 250px;
+            margin-bottom: 30px;
+        }
+
+        .timer-progress-ring svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .timer-progress-ring .bg {
+            fill: none;
+            stroke: rgba(212,168,68,0.1);
+            stroke-width: 4;
+        }
+
+        .timer-progress-ring .progress {
+            fill: none;
+            stroke: var(--gold);
+            stroke-width: 4;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1s linear;
+        }
+
+        .timer-center-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .timer-motivational {
+            font-size: 14px;
+            color: var(--text-dim);
+            margin-bottom: 30px;
+            font-style: italic;
+        }
+
+        .timer-actions {
+            display: flex;
+            gap: 20px;
+        }
+
+        .timer-action-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 2px solid rgba(212,168,68,0.3);
+            background: rgba(212,168,68,0.1);
+            color: var(--gold);
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .timer-action-btn.danger {
+            border-color: rgba(196,86,74,0.3);
+            background: rgba(196,86,74,0.1);
+            color: var(--red-soft);
+        }
+
+        /* ======= SUCCESS SCREEN ======= */
+        #success-screen {
+            background: radial-gradient(ellipse at center, #2D1F0B 0%, #1a0f0a 100%);
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .success-content {
+            text-align: center;
+            animation: fadeInUp 0.5s ease;
+        }
+
+        .success-emoji {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        .success-title {
+            font-family: 'Amiri', serif;
+            font-size: 32px;
+            color: var(--gold);
+            margin-bottom: 10px;
+        }
+
+        .success-subtitle {
+            font-size: 16px;
+            color: var(--text-dim);
+            margin-bottom: 30px;
+        }
+
+        .success-stats {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            margin-bottom: 40px;
+        }
+
+        .success-stat {
+            text-align: center;
+        }
+
+        .success-stat-value {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--gold-light);
+        }
+
+        .success-stat-label {
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+
+        .success-building-unlocked {
+            background: rgba(212,168,68,0.1);
+            border: 1px solid rgba(212,168,68,0.2);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: none;
+        }
+
+        .success-building-unlocked.show {
+            display: block;
+            animation: fadeInUp 0.5s ease 0.3s both;
+        }
+
+        .unlocked-label {
+            font-size: 12px;
+            color: var(--gold);
+            margin-bottom: 5px;
+        }
+
+        .unlocked-emoji {
+            font-size: 40px;
+        }
+
+        .success-done-btn {
+            background: linear-gradient(135deg, var(--gold) 0%, var(--brown-light) 100%);
+            color: var(--night);
+            border: none;
+            padding: 14px 50px;
+            border-radius: 30px;
+            font-family: 'Tajawal';
+            font-size: 18px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        /* ======= SHOP SCREEN ======= */
+        #shop-screen {
+            background: var(--night);
+        }
+
+        .screen-header {
+            padding: calc(var(--safe-top) + 15px) 20px 15px;
+            background: linear-gradient(to bottom, var(--night) 0%, transparent 100%);
+            z-index: 10;
+        }
+
+        .screen-header h1 {
+            font-family: 'Amiri', serif;
+            font-size: 26px;
+            color: var(--gold);
+            text-align: center;
+        }
+
+        .shop-balance {
+            text-align: center;
+            padding: 10px;
+            font-size: 14px;
+            color: var(--text-dim);
+        }
+
+        .shop-balance span {
+            color: var(--gold-light);
+            font-weight: 800;
+            font-size: 20px;
+        }
+
+        .shop-categories {
+            display: flex;
+            gap: 8px;
+            padding: 10px 20px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .shop-categories::-webkit-scrollbar { display: none; }
+
+        .shop-cat-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(212,168,68,0.15);
+            color: var(--text-dim);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-family: 'Tajawal';
+            font-size: 13px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .shop-cat-btn.active {
+            background: var(--gold);
+            color: var(--night);
+            border-color: var(--gold);
+            font-weight: 700;
+        }
+
+        .shop-grid {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px 20px;
+            padding-bottom: calc(90px + var(--safe-bottom));
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            align-content: start;
+        }
+
+        .shop-item {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(212,168,68,0.1);
+            border-radius: 16px;
+            padding: 15px 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .shop-item.locked {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .shop-item.owned {
+            border-color: var(--green);
+            background: rgba(74,122,74,0.1);
+        }
+
+        .shop-item-lock {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            font-size: 12px;
+        }
+
+        .shop-item-emoji {
+            font-size: 36px;
+            margin-bottom: 8px;
+        }
+
+        .shop-item-name {
+            font-size: 11px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            color: var(--text);
+        }
+
+        .shop-item-price {
+            font-size: 12px;
+            color: var(--gold);
+            font-weight: 700;
+        }
+
+        .shop-item-owned-badge {
+            font-size: 11px;
+            color: var(--green-light);
+        }
+
+        /* ======= ROOMS SCREEN ======= */
+        #rooms-screen {
+            background: var(--night);
+        }
+
+        .rooms-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px 20px;
+            padding-bottom: calc(90px + var(--safe-bottom));
+        }
+
+        .room-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(212,168,68,0.15);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 12px;
+        }
+
+        .room-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .room-action-btn {
+            flex: 1;
+            background: rgba(212,168,68,0.15);
+            border: 1px solid rgba(212,168,68,0.3);
+            color: var(--gold);
+            padding: 14px;
+            border-radius: 14px;
+            font-family: 'Tajawal';
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .room-action-btn .btn-icon {
+            font-size: 28px;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .room-members {
+            margin-top: 15px;
+        }
+
+        .room-member {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 12px;
+            margin-bottom: 8px;
+        }
+
+        .member-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--brown-light) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .member-info {
+            flex: 1;
+        }
+
+        .member-name {
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .member-status {
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+
+        .member-status.focusing {
+            color: var(--green-light);
+        }
+
+        .member-time {
+            font-size: 13px;
+            color: var(--gold);
+            font-weight: 700;
+        }
+
+        /* Room code modal */
+        .room-code-display {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .room-code {
+            font-size: 36px;
+            font-weight: 900;
+            color: var(--gold-light);
+            letter-spacing: 8px;
+            background: rgba(212,168,68,0.1);
+            padding: 15px 30px;
+            border-radius: 16px;
+            border: 2px dashed rgba(212,168,68,0.3);
+            margin: 15px 0;
+            display: inline-block;
+        }
+
+        .copy-code-btn {
+            background: var(--gold);
+            color: var(--night);
+            border: none;
+            padding: 10px 30px;
+            border-radius: 20px;
+            font-family: 'Tajawal';
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        /* ======= PROFILE SCREEN ======= */
+        #profile-screen {
+            background: var(--night);
+        }
+
+        .profile-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px 20px;
+            padding-bottom: calc(90px + var(--safe-bottom));
+        }
+
+        .profile-header-card {
+            background: linear-gradient(135deg, rgba(212,168,68,0.15) 0%, rgba(107,78,22,0.1) 100%);
+            border: 1px solid rgba(212,168,68,0.2);
+            border-radius: 20px;
+            padding: 25px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .profile-avatar-large {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--brown-light) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            margin: 0 auto 12px;
+            border: 3px solid var(--gold);
+        }
+
+        .profile-name {
+            font-family: 'Amiri', serif;
+            font-size: 24px;
+            color: var(--gold);
+            margin-bottom: 5px;
+        }
+
+        .profile-name-input {
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid var(--gold);
+            color: var(--gold);
+            font-family: 'Amiri', serif;
+            font-size: 24px;
+            text-align: center;
+            outline: none;
+            width: 200px;
+            padding: 5px;
+        }
+
+        .profile-level {
+            font-size: 14px;
+            color: var(--text-dim);
+        }
+
+        .profile-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .profile-stat-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(212,168,68,0.1);
+            border-radius: 16px;
+            padding: 18px 15px;
+            text-align: center;
+        }
+
+        .profile-stat-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .profile-stat-value {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--gold-light);
+        }
+
+        .profile-stat-label {
+            font-size: 11px;
+            color: var(--text-dim);
+            margin-top: 3px;
+        }
+
+        /* Progress to next phase */
+        .phase-progress {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(212,168,68,0.1);
+            border-radius: 16px;
+            padding: 18px;
+            margin-bottom: 20px;
+        }
+
+        .phase-progress-title {
+            font-size: 14px;
+            color: var(--text-dim);
+            margin-bottom: 5px;
+        }
+
+        .phase-progress-label {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--gold);
+            margin-bottom: 12px;
+        }
+
+        .progress-bar-bg {
+            width: 100%;
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--gold) 0%, var(--gold-glow) 100%);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .phase-progress-detail {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+
+        .reset-btn {
+            width: 100%;
+            background: rgba(196,86,74,0.1);
+            border: 1px solid rgba(196,86,74,0.3);
+            color: var(--red-soft);
+            padding: 14px;
+            border-radius: 14px;
+            font-family: 'Tajawal';
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        /* ======= MODAL ======= */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--night-light);
+            border: 1px solid rgba(212,168,68,0.2);
+            border-radius: 24px;
+            padding: 30px 25px;
+            width: 100%;
+            max-width: 340px;
+            text-align: center;
+            animation: fadeInUp 0.3s ease;
+        }
+
+        .modal-title {
+            font-family: 'Amiri', serif;
+            font-size: 22px;
+            color: var(--gold);
+            margin-bottom: 15px;
+        }
+
+        .modal-input {
+            width: 100%;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(212,168,68,0.2);
+            border-radius: 12px;
+            padding: 14px;
+            color: var(--text);
+            font-family: 'Tajawal';
+            font-size: 18px;
+            text-align: center;
+            outline: none;
+            letter-spacing: 4px;
+            margin-bottom: 15px;
+        }
+
+        .modal-input:focus {
+            border-color: var(--gold);
+        }
+
+        .modal-btn {
+            background: var(--gold);
+            color: var(--night);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 20px;
+            font-family: 'Tajawal';
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        .modal-btn.secondary {
+            background: transparent;
+            color: var(--text-dim);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* ======= CONFETTI ======= */
+        .confetti-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        .confetti-piece {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            top: -10px;
+            animation: confettiFall linear forwards;
+        }
+
+        @keyframes confettiFall {
+            to {
+                top: 110%;
+                transform: rotate(720deg);
+            }
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: var(--gold);
+            color: var(--night);
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 14px;
+            z-index: 9999;
+            opacity: 0;
+            transition: all 0.3s;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 0; }
+    </style>
+</head>
+<body>
+
+    <!-- Splash Screen -->
+    <div id="splash-screen" class="screen active">
+        <div class="splash-content">
+            <div class="splash-logo">مُثابِر</div>
+            <div class="splash-sub">ابنِ مدينتك بالتركيز</div>
+            <div class="splash-loader" style="margin: 40px auto 0;"></div>
+        </div>
+    </div>
+
+    <!-- City Screen (Main) -->
+    <div id="city-screen" class="screen">
+        <div class="city-top-bar">
+            <div class="stats-bar">
+                <div class="stat-item">
+                    <span class="stat-icon">💰</span>
+                    <span class="stat-value" id="coins-display">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-icon">⏱️</span>
+                    <span class="stat-value" id="hours-display">0س</span>
+                </div>
+            </div>
+            <div class="phase-badge" id="phase-badge">المرحلة ١</div>
+        </div>
+
+        <div class="city-viewport" id="city-viewport">
+            <div class="city-world" id="city-world">
+                <!-- Dynamic city content -->
+            </div>
+        </div>
+
+        <button class="start-session-btn" onclick="showScreen('session-screen')">
+            ابدأ جلسة تركيز ⏱️
+        </button>
+
+        <nav class="bottom-nav">
+            <div class="nav-item active" onclick="navigateTo('city')">
+                <span class="nav-icon">🏙️</span>
+                <span class="nav-label">المدينة</span>
+            </div>
+            <div class="nav-item" onclick="navigateTo('shop')">
+                <span class="nav-icon">🏪</span>
+                <span class="nav-label">المتجر</span>
+            </div>
+            <div class="nav-item" onclick="navigateTo('rooms')">
+                <span class="nav-icon">👥</span>
+                <span class="nav-label">غُرف</span>
+            </div>
+            <div class="nav-item" onclick="navigateTo('profile')">
+                <span class="nav-icon">👤</span>
+                <span class="nav-label">ملفي</span>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Session Setup Screen -->
+    <div id="session-screen" class="screen">
+        <button class="session-back" onclick="showScreen('city-screen')">✕</button>
+        <div class="session-setup">
+            <div class="session-title">حدد وقت التركيز</div>
+
+            <div class="time-picker">
+                <button class="time-btn" onclick="adjustTime(-5)">−</button>
+                <div class="time-display" id="session-time-display">25</div>
+                <button class="time-btn" onclick="adjustTime(5)">+</button>
+            </div>
+            <div class="time-unit">دقيقة</div>
+
+            <div class="preset-times">
+                <button class="preset-btn" onclick="setTime(15)">١٥</button>
+                <button class="preset-btn active" onclick="setTime(25)">٢٥</button>
+                <button class="preset-btn" onclick="setTime(30)">٣٠</button>
+                <button class="preset-btn" onclick="setTime(45)">٤٥</button>
+                <button class="preset-btn" onclick="setTime(60)">٦٠</button>
+                <button class="preset-btn" onclick="setTime(90)">٩٠</button>
+                <button class="preset-btn" onclick="setTime(120)">١٢٠</button>
+            </div>
+
+            <button class="begin-btn" onclick="startSession()">ابدأ الآن 🚀</button>
+        </div>
+    </div>
+
+    <!-- Timer Screen -->
+    <div id="timer-screen" class="screen">
+        <div class="timer-building-preview" id="timer-building">🏗️</div>
+        <div class="timer-label">جاري البناء...</div>
+
+        <div class="timer-progress-ring">
+            <svg viewBox="0 0 250 250">
+                <circle class="bg" cx="125" cy="125" r="110"/>
+                <circle class="progress" id="timer-progress-circle" cx="125" cy="125" r="110"
+                    stroke-dasharray="691.15" stroke-dashoffset="0"/>
+            </svg>
+            <div class="timer-center-content">
+                <div class="timer-countdown" id="timer-countdown">25:00</div>
+                <div class="timer-motivational" id="timer-motivational">ثابر... أنت تبني شيئاً عظيماً</div>
+            </div>
+        </div>
+
+        <div class="timer-actions">
+            <button class="timer-action-btn danger" onclick="cancelSession()">✕</button>
+            <button class="timer-action-btn" id="pause-btn" onclick="togglePause()">⏸</button>
+        </div>
+    </div>
+
+    <!-- Success Screen -->
+    <div id="success-screen" class="screen">
+        <div class="success-content">
+            <div class="success-emoji">🎉</div>
+            <div class="success-title">أحسنت يا مُثابِر!</div>
+            <div class="success-subtitle" id="success-subtitle">أكملت جلسة تركيز</div>
+
+            <div class="success-stats">
+                <div class="success-stat">
+                    <div class="success-stat-value" id="success-coins">+25</div>
+                    <div class="success-stat-label">نقطة</div>
+                </div>
+                <div class="success-stat">
+                    <div class="success-stat-value" id="success-time">25</div>
+                    <div class="success-stat-label">دقيقة</div>
+                </div>
+            </div>
+
+            <div class="success-building-unlocked" id="success-unlock">
+                <div class="unlocked-label">🔓 مبنى جديد في المتجر!</div>
+                <div class="unlocked-emoji" id="success-unlock-emoji"></div>
+            </div>
+
+            <button class="success-done-btn" onclick="finishSuccess()">تمام 👍</button>
+        </div>
+    </div>
+
+    <!-- Shop Screen -->
+    <div id="shop-screen" class="screen">
+        <div class="screen-header">
+            <h1>المتجر 🏪</h1>
+        </div>
+        <div class="shop-balance">
+            رصيدك: <span id="shop-balance">0</span> 💰
+        </div>
+        <div class="shop-categories" id="shop-categories"></div>
+        <div class="shop-grid" id="shop-grid"></div>
+
+        <nav class="bottom-nav">
+            <div class="nav-item" onclick="navigateTo('city')">
+                <span class="nav-icon">🏙️</span>
+                <span class="nav-label">المدينة</span>
+            </div>
+            <div class="nav-item active" onclick="navigateTo('shop')">
+                <span class="nav-icon">🏪</span>
+                <span class="nav-label">المتجر</span>
+            </div>
+            <div class="nav-item" onclick="navigateTo('rooms')">
+                <span class="nav-icon">👥</span>
+                <span class="nav-label">غُرف</span>
+            </div>
+            <div class="nav-item" onclick="navigateTo('profile')">
+                <span class="nav-icon">👤</span>
+                <span class="nav-label">ملفي</span>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Rooms Screen -->
+    <div id="rooms-screen" class="screen">
+        <div class="screen-header">
+            <h1>غُرف التركيز 👥</h1>
+        </div>
+        <div class="rooms-content">
+            <div class="room-actions">
+                <button class="room-action-btn" onclick="createRoom()">
+                    <span class="btn-icon">🏠</span>
+                    إنشاء غرفة
+                </button>
+                <button class="room-action-btn" onclick="showJoinModal()">
+                    <span class="btn-icon">🚪</span>
+                    انضمام
+                </button>
+            </div>
+            <div id="room-content"></div>
+        </div>
+
+        <nav class="bottom-nav">
+            <div class="nav-item" onclick="navigateTo('city')">
+                <span class="nav-icon">🏙️</span>
+                <span class="nav-label">المدينة</span>
+            </div>
+            <div class="nav-item" onclick="navigateTo('shop')">
+                <span class="nav-icon">🏪</span>
+                <span class="nav-label">المتجر</span>
+            </div>
+            <div class="nav-item active" onclick="navigateTo('rooms')">
+                <span class="nav-icon">👥</span>
+                <span class="nav-label">غُرف</span>
+            </div>
+            <div class="nav-item" onclick="navigateTo('profile')">
+                <span class="nav-icon">👤</span>
+                <span class="nav-label">ملفي</span>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Profile Screen -->
+    <div id="profile-screen" class="screen">
+        <div class="screen-header">
+            <h1>ملفي الشخصي 👤</h1>
+        </div>
+        <div class="profile-content">
+            <div class="profile-header-card">
+                <div class="profile-avatar-large">🏙️</div>
+                <input class="profile-name-input" id="profile-name" value="مُثابِر" 
+                    placeholder="اسمك" onchange="saveName(this.value)">
+                <div class="profile-level" id="profile-level">المرحلة ١ — الأرض الخالية</div>
+            </div>
+
+            <div class="profile-stats-grid">
+                <div class="profile-stat-card">
+                    <div class="profile-stat-icon">⏱️</div>
+                    <div class="profile-stat-value" id="profile-total-hours">0</div>
+                    <div class="profile-stat-label">ساعة تركيز</div>
+                </div>
+                <div class="profile-stat-card">
+                    <div class="profile-stat-icon">💰</div>
+                    <div class="profile-stat-value" id="profile-total-coins">0</div>
+                    <div class="profile-stat-label">نقطة</div>
+                </div>
+                <div class="profile-stat-card">
+                    <div class="profile-stat-icon">🏗️</div>
+                    <div class="profile-stat-value" id="profile-buildings">0</div>
+                    <div class="profile-stat-label">مبنى</div>
+                </div>
+                <div class="profile-stat-card">
+                    <div class="profile-stat-icon">📊</div>
+                    <div class="profile-stat-value" id="profile-sessions">0</div>
+                    <div class="profile-stat-label">جلسة</div>
+                </div>
+            </div>
+
+            <div class="phase-progress">
+                <div class="phase-progress-title">التقدم نحو</div>
+                <div class="phase-progress-label" id="next-phase-label">المرحلة ٢ — القرية</div>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" id="phase-progress-bar" style="width: 0%"></div>
+                </div>
+                <div class="phase-progress-detail">
+                    <span id="phase-current-hours">0 ساعة</span>
+                    <span id="phase-target-hours">10 ساعات</span>
+                </div>
+            </div>
+
+            <button class="reset-btn" onclick="confirmReset()">🗑️ إعادة تعيين كل شيء</button>
+        </div>
+
+        <nav class="bottom-nav">
+            <div class="nav-item" onclick="navigateTo('city')">
+                <span class="nav-icon">🏙️</span>
+                <span class="nav-label">المدينة</span>
+            </div>
+            <div class="nav-item" onclick="navigateTo('shop')">
+                <span class="nav-icon">🏪</span>
+                <span class="nav-label">المتجر</span>
+            </div>
+            <div class="nav-item" onclick="navigateTo('rooms')">
+                <span class="nav-icon">👥</span>
+                <span class="nav-label">غُرف</span>
+            </div>
+            <div class="nav-item active" onclick="navigateTo('profile')">
+                <span class="nav-icon">👤</span>
+                <span class="nav-label">ملفي</span>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal" id="modal-content"></div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Confetti container -->
+    <div class="confetti-container" id="confetti-container"></div>
+
+    <script>
+        // ==========================================
+        // 🎮 MOTHABER - Complete Game Engine
+        // ==========================================
+
+        // ========== DATA ==========
+        const PHASES = [
+            { name: 'الأرض الخالية', nameAr: '١', minHours: 0, maxHours: 10, emoji: '🏕️', gridSize: 3 },
+            { name: 'القرية', nameAr: '٢', minHours: 10, maxHours: 20, emoji: '🏘️', gridSize: 4 },
+            { name: 'البلدة', nameAr: '٣', minHours: 20, maxHours: 40, emoji: '🏙️', gridSize: 5 },
+            { name: 'المدينة', nameAr: '٤', minHours: 40, maxHours: 70, emoji: '🌆', gridSize: 6 },
+            { name: 'العاصمة', nameAr: '٥', minHours: 70, maxHours: 100, emoji: '🌃', gridSize: 7 },
+            { name: 'الحضارة', nameAr: '٦', minHours: 100, maxHours: 999, emoji: '🌍', gridSize: 8 }
+        ];
+
+        const ALL_BUILDINGS = [
+            // Phase 1 (0-10 hours)
+            { id: 'tent', emoji: '⛺', name: 'خيمة', price: 10, phase: 0, cat: 'سكني' },
+            { id: 'hut', emoji: '🛖', name: 'كوخ', price: 20, phase: 0, cat: 'سكني' },
+            { id: 'well', emoji: '🪣', name: 'بئر', price: 15, phase: 0, cat: 'خدمات' },
+            { id: 'cactus', emoji: '🌵', name: 'صبّار', price: 5, phase: 0, cat: 'طبيعة' },
+            { id: 'palm', emoji: '🌴', name: 'نخلة', price: 8, phase: 0, cat: 'طبيعة' },
+            { id: 'fire', emoji: '🔥', name: 'موقد', price: 12, phase: 0, cat: 'خدمات' },
+            { id: 'rock', emoji: '🪨', name: 'صخرة', price: 3, phase: 0, cat: 'طبيعة' },
+            { id: 'camel', emoji: '🐪', name: 'جمل', price: 25, phase: 0, cat: 'طبيعة' },
+            { id: 'flag', emoji: '🚩', name: 'راية', price: 10, phase: 0, cat: 'خدمات' },
+
+            // Phase 2 (10-20 hours)
+            { id: 'house1', emoji: '🏠', name: 'بيت صغير', price: 30, phase: 1, cat: 'سكني' },
+            { id: 'mosque1', emoji: '🕌', name: 'مسجد', price: 50, phase: 1, cat: 'خدمات' },
+            { id: 'school', emoji: '🏫', name: 'مدرسة', price: 45, phase: 1, cat: 'خدمات' },
+            { id: 'shop1', emoji: '🏪', name: 'دكّان', price: 35, phase: 1, cat: 'تجاري' },
+            { id: 'garden', emoji: '🌳', name: 'حديقة', price: 20, phase: 1, cat: 'طبيعة' },
+            { id: 'farm', emoji: '🌾', name: 'مزرعة', price: 30, phase: 1, cat: 'طبيعة' },
+            { id: 'road', emoji: '🛤️', name: 'طريق', price: 15, phase: 1, cat: 'خدمات' },
+            { id: 'fountain', emoji: '⛲', name: 'نافورة', price: 40, phase: 1, cat: 'خدمات' },
+
+            // Phase 3 (20-40 hours)
+            { id: 'house2', emoji: '🏡', name: 'فيلا', price: 60, phase: 2, cat: 'سكني' },
+            { id: 'hotel', emoji: '🏨', name: 'فندق', price: 80, phase: 2, cat: 'تجاري' },
+            { id: 'hospital', emoji: '🏥', name: 'مستشفى', price: 90, phase: 2, cat: 'خدمات' },
+            { id: 'stadium1', emoji: '🏟️', name: 'ملعب', price: 100, phase: 2, cat: 'ترفيه' },
+            { id: 'bank', emoji: '🏦', name: 'بنك', price: 70, phase: 2, cat: 'تجاري' },
+            { id: 'gas', emoji: '⛽', name: 'محطة وقود', price: 50, phase: 2, cat: 'خدمات' },
+            { id: 'restaurant', emoji: '🍽️', name: 'مطعم', price: 55, phase: 2, cat: 'تجاري' },
+            { id: 'library', emoji: '📚', name: 'مكتبة', price: 65, phase: 2, cat: 'خدمات' },
+            { id: 'gym', emoji: '💪', name: 'نادي رياضي', price: 60, phase: 2, cat: 'ترفيه' },
+
+            // Phase 4 (40-70 hours)
+            { id: 'tower1', emoji: '🏢', name: 'برج تجاري', price: 120, phase: 3, cat: 'تجاري' },
+            { id: 'airport', emoji: '🛫', name: 'مطار', price: 150, phase: 3, cat: 'خدمات' },
+            { id: 'university', emoji: '🎓', name: 'جامعة', price: 130, phase: 3, cat: 'خدمات' },
+            { id: 'bridge', emoji: '🌉', name: 'جسر', price: 100, phase: 3, cat: 'خدمات' },
+            { id: 'mall', emoji: '🛒', name: 'مول', price: 110, phase: 3, cat: 'تجاري' },
+            { id: 'cinema', emoji: '🎬', name: 'سينما', price: 80, phase: 3, cat: 'ترفيه' },
+            { id: 'ship', emoji: '🚢', name: 'ميناء', price: 140, phase: 3, cat: 'خدمات' },
+            { id: 'train', emoji: '🚂', name: 'محطة قطار', price: 120, phase: 3, cat: 'خدمات' },
+            { id: 'park', emoji: '🎡', name: 'ملاهي', price: 100, phase: 3, cat: 'ترفيه' },
+
+            // Phase 5 (70-100 hours)
+            { id: 'skyscraper', emoji: '🏙️', name: 'ناطحة سحاب', price: 200, phase: 4, cat: 'تجاري' },
+            { id: 'castle', emoji: '🏰', name: 'قصر', price: 250, phase: 4, cat: 'سكني' },
+            { id: 'tower2', emoji: '🗼', name: 'برج المثابر', price: 300, phase: 4, cat: 'خاص' },
+            { id: 'stadium2', emoji: '⚽', name: 'استاد دولي', price: 180, phase: 4, cat: 'ترفيه' },
+            { id: 'harbor', emoji: '⚓', name: 'مرسى يخوت', price: 200, phase: 4, cat: 'ترفيه' },
+            { id: 'statue', emoji: '🗽', name: 'تمثال', price: 220, phase: 4, cat: 'خاص' },
+            { id: 'opera', emoji: '🎭', name: 'دار أوبرا', price: 170, phase: 4, cat: 'ترفيه' },
+
+            // Phase 6 (100+ hours)
+            { id: 'pyramid', emoji: '🔺', name: 'أهرامات', price: 400, phase: 5, cat: 'خاص' },
+            { id: 'eiffel', emoji: '🗼', name: 'برج مثابر', price: 500, phase: 5, cat: 'خاص' },
+            { id: 'rocket', emoji: '🚀', name: 'مركز فضائي', price: 600, phase: 5, cat: 'خاص' },
+            { id: 'globe', emoji: '🌍', name: 'قبة العالم', price: 450, phase: 5, cat: 'خاص' },
+            { id: 'diamond', emoji: '💎', name: 'قصر الماس', price: 700, phase: 5, cat: 'خاص' },
+            { id: 'crown', emoji: '👑', name: 'تاج المثابر', price: 1000, phase: 5, cat: 'خاص' },
+        ];
+
+        const MOTIVATIONAL = [
+            'ثابر... أنت تبني شيئاً عظيماً',
+            'كل دقيقة تقرّبك من هدفك',
+            'التركيز سر النجاح',
+            'مدينتك تنمو بجهدك',
+            'أنت أقوى مما تظن',
+            'لا تستسلم... أنت قريب',
+            'العظماء لا يتوقفون',
+            'ركّز وشوف النتيجة',
+            'كل لبنة تحتاج صبر',
+            'أنت مُثابِر حقيقي!'
+        ];
+
+        const PEOPLE = ['🚶', '🚶‍♂️', '🚶‍♀️', '🧑', '👳', '👳‍♀️', '🧕', '👨‍💼', '👩‍💼', '🧑‍🎓'];
+
+        // ========== STATE ==========
+        let state = loadState();
+        let sessionMinutes = 25;
+        let timerInterval = null;
+        let timerRemaining = 0;
+        let timerTotal = 0;
+        let isPaused = false;
+        let currentScreen = 'city';
+        let currentShopCat = 'الكل';
+
+        // Touch/pan state for city viewport
+        let panState = { x: 0, y: 0, startX: 0, startY: 0, isDragging: false, scale: 1 };
+
+        function getDefaultState() {
+            return {
+                name: 'مُثابِر',
+                coins: 0,
+                totalMinutes: 0,
+                totalSessions: 0,
+                ownedBuildings: [],
+                placedBuildings: [],
+                currentRoom: null,
+                version: 1
+            };
+        }
+
+        function loadState() {
+            try {
+                const saved = localStorage.getItem('mothaber_state');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    return { ...getDefaultState(), ...parsed };
+                }
+            } catch(e) {}
+            return getDefaultState();
+        }
+
+        function saveState() {
+            localStorage.setItem('mothaber_state', JSON.stringify(state));
+        }
+
+        // ========== PHASE SYSTEM ==========
+        function getTotalHours() {
+            return state.totalMinutes / 60;
+        }
+
+        function getCurrentPhase() {
+            const hours = getTotalHours();
+            for (let i = PHASES.length - 1; i >= 0; i--) {
+                if (hours >= PHASES[i].minHours) return i;
+            }
+            return 0;
+        }
+
+        function getPhaseInfo() {
+            const idx = getCurrentPhase();
+            return PHASES[idx];
+        }
+
+        function getNextPhaseInfo() {
+            const idx = getCurrentPhase();
+            if (idx < PHASES.length - 1) return PHASES[idx + 1];
+            return null;
+        }
+
+        // ========== SCREEN MANAGEMENT ==========
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        function navigateTo(page) {
+            currentScreen = page;
+            const screenMap = {
+                'city': 'city-screen',
+                'shop': 'shop-screen',
+                'rooms': 'rooms-screen',
+                'profile': 'profile-screen'
+            };
+            showScreen(screenMap[page]);
+
+            if (page === 'city') renderCity();
+            if (page === 'shop') renderShop();
+            if (page === 'rooms') renderRooms();
+            if (page === 'profile') renderProfile();
+        }
+
+        // ========== CITY RENDERING ==========
+        function renderCity() {
+            updateTopBar();
+            const world = document.getElementById('city-world');
+            const phase = getCurrentPhase();
+            const phaseInfo = PHASES[phase];
+
+            // Build sky based on phase
+            const cityScreen = document.getElementById('city-screen');
+            const gradients = [
+                'linear-gradient(180deg, #1a2a4a 0%, #d4845a 55%, #e8a87c 65%, #C4935A 80%, #DEB887 100%)',
+                'linear-gradient(180deg, #1a3355 0%, #4a8ab5 30%, #87CEEB 55%, #C4935A 75%, #DEB887 100%)',
+                'linear-gradient(180deg, #0f2844 0%, #1a5276 25%, #5DADE2 50%, #C4935A 72%, #DEB887 100%)',
+                'linear-gradient(180deg, #0a1f3d 0%, #1a4a7a 20%, #3498DB 45%, #85C1E9 60%, #C4935A 72%, #DEB887 100%)',
+                'linear-gradient(180deg, #0a0a2e 0%, #1a1a5e 15%, #2E4053 35%, #F4D03F 55%, #C4935A 72%, #DEB887 100%)',
+                'linear-gradient(180deg, #050520 0%, #1a0a3e 10%, #4A235A 25%, #8E44AD 40%, #F4D03F 55%, #C4935A 70%, #DEB887 100%)'
+            ];
+            cityScreen.style.background = gradients[phase];
+
+            // Generate city world
+            let html = '';
+
+            // Stars (for higher phases or evening look)
+            for (let i = 0; i < 30; i++) {
+                const x = Math.random() * 100;
+                const y = Math.random() * 30;
+                const delay = Math.random() * 3;
+                const size = Math.random() * 2 + 1;
+                html += `<div class="star" style="left:${x}%;top:${y}%;width:${size}px;height:${size}px;animation-delay:${delay}s"></div>`;
+            }
+
+            // Clouds
+            for (let i = 0; i < 3; i++) {
+                const y = 10 + Math.random() * 20;
+                const dur = 30 + Math.random() * 20;
+                const delay = Math.random() * -30;
+                html += `<div class="cloud" style="top:${y}%;animation-duration:${dur}s;animation-delay:${delay}s">☁️</div>`;
+            }
+
+            // Ground
+            html += `<div class="city-ground"></div>`;
+
+            // Phase decorations
+            if (phase >= 1) {
+                // River
+                html += `<div style="position:absolute;bottom:28%;left:10%;font-size:20px;opacity:0.5">🌊🌊🌊</div>`;
+            }
+            if (phase >= 2) {
+                // Mountain
+                html += `<div style="position:absolute;bottom:45%;right:5%;font-size:60px;opacity:0.4">🏔️</div>`;
+            }
+            if (phase >= 3) {
+                // Sea
+                html += `<div style="position:absolute;bottom:38%;left:0;font-size:16px;opacity:0.3">🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊</div>`;
+            }
+
+            // Building grid
+            const gridSize = phaseInfo.gridSize;
+            const totalSlots = gridSize * gridSize;
+            html += `<div class="city-grid" style="grid-template-columns: repeat(${gridSize}, 50px); bottom: 12%;">`;
+
+            for (let i = 0; i < totalSlots; i++) {
+                const placed = state.placedBuildings[i];
+                if (placed) {
+                    const bldg = ALL_BUILDINGS.find(b => b.id === placed);
+                    if (bldg) {
+                        html += `<div class="building-slot" onclick="buildingTap(${i})">
+                            <span class="building-emoji">${bldg.emoji}</span>
+                        </div>`;
+                    } else {
+                        html += `<div class="building-slot empty"><span class="building-emoji" style="opacity:0.2">➕</span></div>`;
+                    }
+                } else {
+                    html += `<div class="building-slot empty" onclick="placeBuildingAt(${i})">
+                        <span class="building-emoji" style="opacity:0.2">➕</span>
+                    </div>`;
+                }
+            }
+            html += '</div>';
+
+            // People walking
+            const peopleCount = Math.min(2 + phase * 2, 12);
+            for (let i = 0; i < peopleCount; i++) {
+                const person = PEOPLE[Math.floor(Math.random() * PEOPLE.length)];
+                const dur = 15 + Math.random() * 20;
+                const delay = Math.random() * -20;
+                const bottom = 10 + Math.random() * 5;
+                const direction = Math.random() > 0.5 ? 'walkPerson' : 'walkPersonReverse';
+                html += `<div class="person" style="bottom:${bottom}%;animation-duration:${dur}s;animation-delay:${delay}s;font-size:${14 + Math.random()*6}px">${person}</div>`;
+            }
+
+            world.innerHTML = html;
+
+            // Reset pan
+            world.style.transform = `translate(${-500}px, ${-500}px) scale(1)`;
+            panState.x = -500;
+            panState.y = -500;
+            panState.scale = 1;
+
+            setupCityPan();
+        }
+
+        function setupCityPan() {
+            const viewport = document.getElementById('city-viewport');
+            const world = document.getElementById('city-world');
+
+            let lastTouchX, lastTouchY;
+
+            viewport.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1) {
+                    lastTouchX = e.touches[0].clientX;
+                    lastTouchY = e.touches[0].clientY;
+                    panState.isDragging = true;
+                }
+            }, { passive: true });
+
+            viewport.addEventListener('touchmove', (e) => {
+                if (!panState.isDragging || e.touches.length !== 1) return;
+                const dx = e.touches[0].clientX - lastTouchX;
+                const dy = e.touches[0].clientY - lastTouchY;
+                panState.x += dx;
+                panState.y += dy;
+
+                // Clamp
+                const maxX = 0, minX = -(2000 - window.innerWidth);
+                const maxY = 0, minY = -(2000 - window.innerHeight);
+                panState.x = Math.max(minX, Math.min(maxX, panState.x));
+                panState.y = Math.max(minY, Math.min(maxY, panState.y));
+
+                world.style.transform = `translate(${panState.x}px, ${panState.y}px) scale(${panState.scale})`;
+                lastTouchX = e.touches[0].clientX;
+                lastTouchY = e.touches[0].clientY;
+            }, { passive: true });
+
+            viewport.addEventListener('touchend', () => {
+                panState.isDragging = false;
+            }, { passive: true });
+        }
+
+        function updateTopBar() {
+            document.getElementById('coins-display').textContent = state.coins;
+            const hours = getTotalHours();
+            document.getElementById('hours-display').textContent = hours < 1 ? Math.round(state.totalMinutes) + 'د' : hours.toFixed(1) + 'س';
+            const phase = getCurrentPhase();
+            document.getElementById('phase-badge').textContent = `المرحلة ${PHASES[phase].nameAr} ${PHASES[phase].emoji}`;
+        }
+
+        function buildingTap(index) {
+            const id = state.placedBuildings[index];
+            const bldg = ALL_BUILDINGS.find(b => b.id === id);
+            if (bldg) {
+                showToast(`${bldg.emoji} ${bldg.name}`);
+            }
+        }
+
+        function placeBuildingAt(index) {
+            // Get owned but not placed buildings
+            const placed = new Set(state.placedBuildings.filter(Boolean));
+            const available = state.ownedBuildings.filter(id => {
+                const count = state.placedBuildings.filter(p => p === id).length;
+                const ownedCount = state.ownedBuildings.filter(o => o === id).length;
+                return count < ownedCount;
+            });
+
+            if (available.length === 0) {
+                showToast('اشترِ مباني من المتجر أولاً! 🏪');
+                return;
+            }
+
+            // Show selection modal
+            let html = `<div class="modal-title">اختر مبنى</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-height:300px;overflow-y:auto;">`;
+            const uniqueAvailable = [...new Set(available)];
+            uniqueAvailable.forEach(id => {
+                const bldg = ALL_BUILDINGS.find(b => b.id === id);
+                if (bldg) {
+                    html += `<div style="text-align:center;padding:10px;background:rgba(255,255,255,0.05);border-radius:12px;cursor:pointer" onclick="confirmPlace('${id}',${index})">
+                        <div style="font-size:30px">${bldg.emoji}</div>
+                        <div style="font-size:11px;margin-top:4px">${bldg.name}</div>
+                    </div>`;
+                }
+            });
+            html += `</div><button class="modal-btn secondary" onclick="closeModal()" style="margin-top:15px">إلغاء</button>`;
+
+            showModal(html);
+        }
+
+        function confirmPlace(buildingId, index) {
+            // Ensure placedBuildings array is big enough
+            while (state.placedBuildings.length <= index) {
+                state.placedBuildings.push(null);
+            }
+            state.placedBuildings[index] = buildingId;
+            saveState();
+            closeModal();
+            renderCity();
+            const bldg = ALL_BUILDINGS.find(b => b.id === buildingId);
+            showToast(`تم وضع ${bldg.emoji} ${bldg.name}`);
+        }
+
+        // ========== SESSION ==========
+        function adjustTime(delta) {
+            sessionMinutes = Math.max(5, Math.min(180, sessionMinutes + delta));
+            document.getElementById('session-time-display').textContent = sessionMinutes;
+            updatePresetButtons();
+        }
+
+        function setTime(mins) {
+            sessionMinutes = mins;
+            document.getElementById('session-time-display').textContent = sessionMinutes;
+            updatePresetButtons();
+        }
+
+        function updatePresetButtons() {
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                const val = parseInt(btn.textContent.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)));
+                btn.classList.toggle('active', val === sessionMinutes);
+            });
+        }
+
+        function startSession() {
+            timerTotal = sessionMinutes * 60;
+            timerRemaining = timerTotal;
+            isPaused = false;
+
+            showScreen('timer-screen');
+            updateTimerDisplay();
+
+            // Pick random building emoji for preview
+            const phase = getCurrentPhase();
+            const available = ALL_BUILDINGS.filter(b => b.phase <= phase);
+            const randomBldg = available[Math.floor(Math.random() * available.length)];
+            document.getElementById('timer-building').textContent = randomBldg ? randomBldg.emoji : '🏗️';
+
+            // Random motivational
+            document.getElementById('timer-motivational').textContent =
+                MOTIVATIONAL[Math.floor(Math.random() * MOTIVATIONAL.length)];
+
+            document.getElementById('pause-btn').textContent = '⏸';
+
+            timerInterval = setInterval(() => {
+                if (!isPaused) {
+                    timerRemaining--;
+                    updateTimerDisplay();
+
+                    // Change motivational every 60 seconds
+                    if (timerRemaining % 60 === 0 && timerRemaining > 0) {
+                        document.getElementById('timer-motivational').textContent =
+                            MOTIVATIONAL[Math.floor(Math.random() * MOTIVATIONAL.length)];
+                    }
+
+                    if (timerRemaining <= 0) {
+                        clearInterval(timerInterval);
+                        sessionComplete();
+                    }
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const mins = Math.floor(timerRemaining / 60);
+            const secs = timerRemaining % 60;
+            document.getElementById('timer-countdown').textContent =
+                `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+            // Update progress ring
+            const circumference = 2 * Math.PI * 110; // r=110
+            const progress = (timerTotal - timerRemaining) / timerTotal;
+            const offset = circumference * (1 - progress);
+            document.getElementById('timer-progress-circle').style.strokeDashoffset = offset;
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            document.getElementById('pause-btn').textContent = isPaused ? '▶' : '⏸';
+        }
+
+        function cancelSession() {
+            if (confirm('متأكد تبي تلغي الجلسة؟ ما بتحصل نقاط 😢')) {
+                clearInterval(timerInterval);
+                showScreen('city-screen');
+                renderCity();
+            }
+        }
+
+        function sessionComplete() {
+            const earnedCoins = sessionMinutes;
+            const oldPhase = getCurrentPhase();
+
+            state.coins += earnedCoins;
+            state.totalMinutes += sessionMinutes;
+            state.totalSessions++;
+
+            const newPhase = getCurrentPhase();
+            saveState();
+
+            // Show success
+            document.getElementById('success-coins').textContent = '+' + earnedCoins;
+            document.getElementById('success-time').textContent = sessionMinutes;
+            document.getElementById('success-subtitle').textContent =
+                `أكملت ${sessionMinutes} دقيقة تركيز 💪`;
+
+            // Check phase unlock
+            if (newPhase > oldPhase) {
+                const unlockDiv = document.getElementById('success-unlock');
+                unlockDiv.classList.add('show');
+                document.getElementById('success-unlock-emoji').textContent =
+                    PHASES[newPhase].emoji + ' ' + PHASES[newPhase].name;
+                document.getElementById('success-subtitle').textContent =
+                    `🎊 مبروك! وصلت ${PHASES[newPhase].name}!`;
+            } else {
+                document.getElementById('success-unlock').classList.remove('show');
+            }
+
+            showScreen('success-screen');
+            spawnConfetti();
+
+            // Vibrate if supported
+            if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+        }
+
+        function finishSuccess() {
+            showScreen('city-screen');
+            renderCity();
+        }
+
+        // ========== SHOP ==========
+        function renderShop() {
+            document.getElementById('shop-balance').textContent = state.coins;
+
+            const phase = getCurrentPhase();
+            const categories = ['الكل', 'سكني', 'خدمات', 'تجاري', 'طبيعة', 'ترفيه', 'خاص'];
+
+            let catHtml = '';
+            categories.forEach(cat => {
+                catHtml += `<button class="shop-cat-btn ${cat === currentShopCat ? 'active' : ''}"
+                    onclick="filterShop('${cat}')">${cat}</button>`;
+            });
+            document.getElementById('shop-categories').innerHTML = catHtml;
+
+            let items = ALL_BUILDINGS;
+            if (currentShopCat !== 'الكل') {
+                items = items.filter(b => b.cat === currentShopCat);
+            }
+
+            let html = '';
+            items.forEach(item => {
+                const locked = item.phase > phase;
+                const ownedCount = state.ownedBuildings.filter(id => id === item.id).length;
+                const owned = ownedCount > 0;
+
+                html += `<div class="shop-item ${locked ? 'locked' : ''} ${owned ? 'owned' : ''}"
+                    onclick="${locked ? '' : `buyItem('${item.id}')`}">
+                    ${locked ? '<div class="shop-item-lock">🔒</div>' : ''}
+                    <div class="shop-item-emoji">${item.emoji}</div>
+                    <div class="shop-item-name">${item.name}</div>
+                    ${owned ? `<div class="shop-item-owned-badge">✓ تملك ${ownedCount}</div>` :
+                        `<div class="shop-item-price">${item.price} 💰</div>`}
+                </div>`;
+            });
+
+            document.getElementById('shop-grid').innerHTML = html;
+        }
+
+        function filterShop(cat) {
+            currentShopCat = cat;
+            renderShop();
+        }
+
+        function buyItem(id) {
+            const item = ALL_BUILDINGS.find(b => b.id === id);
+            if (!item) return;
+
+            if (state.coins < item.price) {
+                showToast('ما عندك نقاط كافية! 💰');
+                return;
+            }
+
+            let html = `
+                <div style="font-size:60px;margin-bottom:10px">${item.emoji}</div>
+                <div class="modal-title">${item.name}</div>
+                <div style="color:var(--text-dim);margin-bottom:15px">السعر: ${item.price} 💰</div>
+                <div style="display:flex;gap:10px;justify-content:center">
+                    <button class="modal-btn" onclick="confirmBuy('${id}')">شراء ✓</button>
+                    <button class="modal-btn secondary" onclick="closeModal()">إلغاء</button>
+                </div>
+            `;
+            showModal(html);
+        }
+
+        function confirmBuy(id) {
+            const item = ALL_BUILDINGS.find(b => b.id === id);
+            if (state.coins < item.price) {
+                showToast('ما عندك نقاط كافية!');
+                closeModal();
+                return;
+            }
+
+            state.coins -= item.price;
+            state.ownedBuildings.push(id);
+            saveState();
+            closeModal();
+            renderShop();
+            showToast(`تم شراء ${item.emoji} ${item.name}! 🎉`);
+        }
+
+        // ========== ROOMS ==========
+        function renderRooms() {
+            const content = document.getElementById('room-content');
+
+            if (state.currentRoom) {
+                let html = `
+                    <div class="room-card">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px">
+                            <div style="font-size:18px;font-weight:700;color:var(--gold)">غرفتك</div>
+                            <div class="room-code" style="font-size:18px;padding:8px 16px;letter-spacing:4px">${state.currentRoom}</div>
+                        </div>
+                        <button class="copy-code-btn" onclick="copyRoomCode()">نسخ الكود 📋</button>
+                        <div class="room-members" style="margin-top:20px">
+                            <div style="font-size:14px;color:var(--text-dim);margin-bottom:10px">الأعضاء:</div>
+                            <div class="room-member">
+                                <div class="member-avatar">🧑</div>
+                                <div class="member-info">
+                                    <div class="member-name">${state.name} (أنت)</div>
+                                    <div class="member-status">متصل</div>
+                                </div>
+                                <div class="member-time">${getTotalHours().toFixed(1)}س</div>
+                            </div>
+                        </div>
+                        <button class="reset-btn" style="margin-top:15px" onclick="leaveRoom()">مغادرة الغرفة 🚪</button>
+                    </div>
+                    <p style="text-align:center;color:var(--text-dim);font-size:13px;margin-top:10px">
+                        شارك الكود مع أصحابك ليدخلون نفس الغرفة 👥
+                    </p>
+                `;
+                content.innerHTML = html;
+            } else {
+                content.innerHTML = `
+                    <div style="text-align:center;padding:40px 20px;color:var(--text-dim)">
+                        <div style="font-size:60px;margin-bottom:15px">👥</div>
+                        <div style="font-size:16px;margin-bottom:5px">ما عندك غرفة حالياً</div>
+                        <div style="font-size:13px">أنشئ غرفة أو انضم لوحدة موجودة</div>
+                    </div>
+                `;
+            }
+        }
+
+        function createRoom() {
+            const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+            state.currentRoom = code;
+            saveState();
+            renderRooms();
+            showToast('تم إنشاء الغرفة! 🏠');
+        }
+
+        function showJoinModal() {
+            let html = `
+                <div class="modal-title">انضم لغرفة</div>
+                <input class="modal-input" id="join-code-input" placeholder="أدخل الكود" maxlength="6"
+                    style="text-transform:uppercase">
+                <div style="display:flex;gap:10px;justify-content:center;margin-top:10px">
+                    <button class="modal-btn" onclick="joinRoom()">انضمام 🚪</button>
+                    <button class="modal-btn secondary" onclick="closeModal()">إلغاء</button>
+                </div>
+            `;
+            showModal(html);
+            setTimeout(() => document.getElementById('join-code-input')?.focus(), 300);
+        }
+
+        function joinRoom() {
+            const input = document.getElementById('join-code-input');
+            const code = input?.value?.toUpperCase().trim();
+            if (!code || code.length < 4) {
+                showToast('أدخل كود صحيح');
+                return;
+            }
+            state.currentRoom = code;
+            saveState();
+            closeModal();
+            renderRooms();
+            showToast('تم الانضمام! 🎉');
+        }
+
+        function leaveRoom() {
+            if (confirm('متأكد تبي تطلع من الغرفة؟')) {
+                state.currentRoom = null;
+                saveState();
+                renderRooms();
+                showToast('طلعت من الغرفة');
+            }
+        }
+
+        function copyRoomCode() {
+            if (state.currentRoom) {
+                navigator.clipboard?.writeText(state.currentRoom).then(() => {
+                    showToast('تم نسخ الكود! 📋');
+                }).catch(() => {
+                    showToast('الكود: ' + state.currentRoom);
+                });
+            }
+        }
+
+        // ========== PROFILE ==========
+        function renderProfile() {
+            const hours = getTotalHours();
+            const phase = getCurrentPhase();
+            const phaseInfo = PHASES[phase];
+            const nextPhase = getNextPhaseInfo();
+
+            document.getElementById('profile-name').value = state.name;
+            document.getElementById('profile-level').textContent =
+                `المرحلة ${phaseInfo.nameAr} — ${phaseInfo.name} ${phaseInfo.emoji}`;
+            document.getElementById('profile-total-hours').textContent = hours.toFixed(1);
+            document.getElementById('profile-total-coins').textContent = state.coins;
+            document.getElementById('profile-buildings').textContent = state.ownedBuildings.length;
+            document.getElementById('profile-sessions').textContent = state.totalSessions;
+
+            if (nextPhase) {
+                document.getElementById('next-phase-label').textContent =
+                    `المرحلة ${nextPhase.nameAr} — ${nextPhase.name} ${nextPhase.emoji}`;
+                const progress = ((hours - phaseInfo.minHours) / (nextPhase.minHours - phaseInfo.minHours)) * 100;
+                document.getElementById('phase-progress-bar').style.width = Math.min(100, progress) + '%';
+                document.getElementById('phase-current-hours').textContent = hours.toFixed(1) + ' ساعة';
+                document.getElementById('phase-target-hours').textContent = nextPhase.minHours + ' ساعة';
+            } else {
+                document.getElementById('next-phase-label').textContent = '🏆 وصلت القمة!';
+                document.getElementById('phase-progress-bar').style.width = '100%';
+                document.getElementById('phase-current-hours').textContent = hours.toFixed(1) + ' ساعة';
+                document.getElementById('phase-target-hours').textContent = '∞';
+            }
+        }
+
+        function saveName(name) {
+            state.name = name || 'مُثابِر';
+            saveState();
+        }
+
+        function confirmReset() {
+            let html = `
+                <div class="modal-title">⚠️ إعادة تعيين</div>
+                <p style="color:var(--text-dim);margin-bottom:20px">بتنمسح كل بياناتك: المدينة والنقاط والمباني. متأكد؟</p>
+                <div style="display:flex;gap:10px;justify-content:center">
+                    <button class="modal-btn" style="background:var(--red-soft)" onclick="doReset()">امسح الكل 🗑️</button>
+                    <button class="modal-btn secondary" onclick="closeModal()">إلغاء</button>
+                </div>
+            `;
+            showModal(html);
+        }
+
+        function doReset() {
+            state = getDefaultState();
+            saveState();
+            closeModal();
+            navigateTo('city');
+            showToast('تم إعادة التعيين');
+        }
+
+        // ========== MODAL ==========
+        function showModal(html) {
+            document.getElementById('modal-content').innerHTML = html;
+            document.getElementById('modal-overlay').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('modal-overlay').classList.remove('active');
+        }
+
+        // Close modal on overlay click
+        document.getElementById('modal-overlay').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) closeModal();
+        });
+
+        // ========== TOAST ==========
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        // ========== CONFETTI ==========
+        function spawnConfetti() {
+            const container = document.getElementById('confetti-container');
+            container.innerHTML = '';
+            const colors = ['#D4A844', '#F0D68A', '#FFD700', '#C4935A', '#6BAF6B', '#7BA3D4', '#C4564A'];
+            for (let i = 0; i < 50; i++) {
+                const piece = document.createElement('div');
+                piece.className = 'confetti-piece';
+                piece.style.left = Math.random() * 100 + '%';
+                piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+                piece.style.animationDuration = (2 + Math.random() * 3) + 's';
+                piece.style.animationDelay = Math.random() * 0.5 + 's';
+                piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+                piece.style.width = (6 + Math.random() * 8) + 'px';
+                piece.style.height = (6 + Math.random() * 8) + 'px';
+                container.appendChild(piece);
+            }
+            setTimeout(() => container.innerHTML = '', 5000);
+        }
+
+        // ========== INIT ==========
+        function init() {
+            // Show splash for 2 seconds
+            setTimeout(() => {
+                showScreen('city-screen');
+                renderCity();
+            }, 2000);
+        }
+
+        // Add CSS for reverse walk
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes walkPersonReverse {
+                from { left: calc(100% + 30px); }
+                to { left: -30px; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Service Worker for offline (PWA)
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(() => {});
+        }
+
+        init();
+    </script>
+</body>
+</html>
